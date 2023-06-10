@@ -27,7 +27,16 @@ async fn handler() -> Html<&'static str> {
 
 async fn handler_wasm() -> impl IntoResponse {
     let engine = Engine::default();
-    let module_res = Module::from_file(&engine, "./src/test.wat");
+
+    let wat = r#"
+        (module
+            (func (export "run") (result i32)
+                i32.const 42
+            )
+        )
+    "#;
+
+    let module_res = Module::new(&engine, wat);
 
     let module = match module_res {
         Ok(module) => module,
