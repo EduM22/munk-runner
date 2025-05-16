@@ -1,2 +1,2 @@
 # munk
-Munk - Munk - Wasm run service 
+Munk - js run service 
