@@ -22,6 +22,19 @@ Munk.env.toObject() -> { key: value } | undefined | null
 Munk.serve((req: Request) => Response)
 ```
 
+### Custom request headers
+These are inserted into the request to the function
+```
+x-munk-geo-as-domain: 'google.com'
+x-munk-geo-as-name: 'Google LLC'
+x-munk-geo-asn: 'AS15169'
+x-munk-geo-continent: 'North America'
+x-munk-geo-continent-code: 'NA'
+x-munk-geo-country: 'United States'
+x-munk-geo-country-code: 'US'
+x-munk-geo-ip: '8.8.8.8'
+```
+
 ### Add new Function
 
 POST - `/api/function`  
@@ -50,6 +63,19 @@ header `munk-function-id` with the id of the created function.
 Add header `munk-function-id` with the id of the function, then you will be redirected to the function.
 
 ex: `'munk-function-id': '604qi60u0h0v'`
+
+### Delete function
+
+DELETE - `/api/function?id={munk-function-id}`  
+
+Headers - [  
+  `munk-function-id`: `main`,  
+  `munk-auth`: `${VALUE_SET_IN_SETUP}`  
+]  
+
+#### Returns
+
+status code `201`
 
 ## Setup Prod
 
