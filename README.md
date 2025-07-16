@@ -13,6 +13,9 @@ The navigator.userAgent value should be = `Munk`
 ### Limits
 The code execution has a timeout of 15s and cpu limit of 50ms
 
+> [!NOTE]  
+> Users without a license is limited to 5 functions.
+
 ### Custom API
 
 ```
@@ -33,6 +36,28 @@ x-munk-geo-continent-code: 'NA'
 x-munk-geo-country: 'United States'
 x-munk-geo-country-code: 'US'
 x-munk-geo-ip: '8.8.8.8'
+```
+
+### List functions
+
+GET - `/api/function`  
+
+Headers - [  
+  `munk-function-id`: `main`,  
+  `munk-auth`: `${VALUE_SET_IN_SETUP}`  
+] 
+
+#### Returns
+
+```
+{
+  functions: [
+    {
+      id: '{functionId}',
+      created_at: '{function_created_at}'
+    }
+  ]
+}
 ```
 
 ### Add new Function
