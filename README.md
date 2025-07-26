@@ -17,6 +17,8 @@ Munk.serve(async (req) => {
 ```
 
 ## Setup
+Get image from `docker pull ghcr.io/edum22/munk-runner:<VERSION>`
+
   * `env:MUNK_DB_PATH` -> Set custom save path for db | Default = `/var/lib/munk/`
   * `env:MUNK_ENCRYPTION_KEY` -> Set encryption key for db
   * `env:MUNK_AUTH_HEADER_VALUE` -> Set the admin auth header value
