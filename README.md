@@ -71,8 +71,8 @@ Headers - [
 {
     "functions": [
       {
-        "id": '{functionId}',
-        "created_at": '{function_created_at}',
+        "id": "{functionId}",
+        "created_at": "{function_created_at}",
         "limits": {
             "walltime": "15s",
             "cputime": "50ms"
@@ -98,7 +98,7 @@ Body
     "envs": [
         { "test": "this works, soo cool" }
     ],
-    "limits": (optional) {
+    "limits": { // (optional)
         "walltime": "10s", // Default: 15s
         "cputime": "75ms" // Default: 50ms
     }
