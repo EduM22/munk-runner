@@ -3,7 +3,10 @@ Munk - JS/TS & WASM run service
 Use it for edge functions, A/B testing, security features or anything else you can create
 
 ### Status
-This project is in: heavy development
+This project is in: Beta
+
+### Upload cli
+use [hilly](https://github.com/EduM22/hilly) to upload code to munk easier
 
 ## Example Function
 
