@@ -25,6 +25,7 @@ Get image from `docker pull ghcr.io/edum22/munk-runner:<VERSION>`
   * `env:MUNK_DB_PATH` -> Set custom save path for db | Default = `/var/lib/munk/`
   * `env:MUNK_ENCRYPTION_KEY` -> Set encryption key for db
   * `env:MUNK_AUTH_HEADER_VALUE` -> Set the admin auth header value
+  * `env:MUNK_TELEMETRY` -> Set it to `false`to not send telemetry | Defaults = `true`
 
 ## Info
 The runtime is trying to conform to the [wintertc](https://min-common-api.proposal.wintertc.org/) spec.   
