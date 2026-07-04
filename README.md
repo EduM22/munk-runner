@@ -25,11 +25,15 @@ Get image from `docker pull ghcr.io/edum22/munk-runner:<VERSION>`
   * `env:MUNK_DB_PATH` -> Set custom save path for db | Default = `/var/lib/munk/`
   * `env:MUNK_ENCRYPTION_KEY` -> Set encryption key for db
   * `env:MUNK_AUTH_HEADER_VALUE` -> Set the admin auth header value
-  * `env:MUNK_TELEMETRY` -> Set it to `false`to not send telemetry | Defaults = `true`
+  * `env:MUNK_LOG_TOKEN` -> Set the auth token for viewing logs | Defaults = `env:MUNK_AUTH_HEADER_VALUE`
+  * `env:MUNK_USE_SESSION` -> Set to `true` to use `MunkSession` for persistent function execution | Defaults = `false`
+  * `env:MUNK_TELEMETRY` -> Set it to `false` to not send telemetry | Defaults = `true`
 
 ## Info
 The runtime is trying to conform to the [wintertc](https://min-common-api.proposal.wintertc.org/) spec.   
 The navigator.userAgent value should be = `Munk`
+
+The use of `env:MUNK_USE_SESSION` CAN increase the throughput of the function BUT it will cache the v8/deno_core runtime per function, So if you need every request to use a clean deno_core isolate DO NOT use `env:MUNK_USE_SESSION`
 
 ### Limits
 The code execution has default timeout of 15s and cpu limit of 50ms, this can be changed when creating the function
@@ -62,7 +66,7 @@ x-munk-geo-ip: '8.8.8.8'
 
 ### List functions
 
-GET - `/api/functions`  
+GET - `/api/functions` or `/api/function`  
 
 Headers - [  
   `munk-function-id`: `main`,  
@@ -74,21 +78,21 @@ Headers - [
 ```json
 {
     "functions": [
-      {
-        "id": "{functionId}",
-        "created_at": "{function_created_at}",
-        "limits": {
-            "walltime": "15s",
-            "cputime": "50ms"
+        {
+            "id": "{functionId}",
+            "created_at": "{function_created_at}",
+            "limits": {
+                "walltime": "15s",
+                "cputime": "50ms"
+            }
         }
-      }
     ]
 }
 ```
 
 ### Add new Function
 
-POST - `/api/functions`  
+POST - `/api/functions` or `/api/function`  
 
 Headers - [  
   `munk-function-id`: `main`,  
@@ -121,7 +125,7 @@ ex: `'munk-function-id': '604qi60u0h0v'`
 
 ### Delete function
 
-DELETE - `/api/functions?id={munk-function-id}`  
+DELETE - `/api/functions?id={munk-function-id}` or `/api/function?id={munk-function-id}`  
 
 Headers - [  
   `munk-function-id`: `main`,  
@@ -131,6 +135,26 @@ Headers - [
 #### Returns
 
 status code `204`
+
+### Stream Logs (SSE)
+
+GET - `/api/logs/stream`  
+
+Headers - [  
+  `Authorization`: `Bearer ${MUNK_LOG_TOKEN}` (or `Bearer ${MUNK_AUTH_HEADER_VALUE}` if no log token is set)  
+]  
+
+#### Returns
+
+A real-time Server-Sent Events (SSE) stream of type `text/event-stream`. Each event data is a JSON string representing a function execution log:
+
+```json
+{
+    "id": "{munk-function-id}",
+    "is_error": false,
+    "message": "log message from code execution"
+}
+```
 
 ## Setup Prod
 
