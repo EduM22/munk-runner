@@ -63,6 +63,19 @@ x-munk-geo-country: 'United States'
 x-munk-geo-country-code: 'US'
 x-munk-geo-ip: '8.8.8.8'
 ```
+### Health Check
+
+GET - `/health`
+
+#### Returns
+
+```json
+{
+    "status": "ok",
+    "version": "<VERSION>",
+    "uptime_secs": 120
+}
+```
 
 ### List functions
 
@@ -80,6 +93,7 @@ Headers - [
     "functions": [
         {
             "id": "{functionId}",
+            "name": "my-func",
             "created_at": "{function_created_at}",
             "limits": {
                 "walltime": "15s",
@@ -102,6 +116,7 @@ Headers - [
 Body
 ```json
 {
+    "name": "my-func", // (optional)
     "code": "Munk.serve(async (req) => new Response(`Hello from munk ${Munk.env.get('test')}`))",
     "envs": [
         { "test": "this works, soo cool" }
@@ -132,6 +147,8 @@ Headers - [
   `munk-auth`: `${VALUE_SET_IN_SETUP}`  
 ]  
 
+Deleting a function also deletes all associated logs.
+
 #### Returns
 
 status code `204`
@@ -141,8 +158,12 @@ status code `204`
 GET - `/api/logs/stream`  
 
 Headers - [  
+  `munk-function-id`: `main`,  
   `Authorization`: `Bearer ${MUNK_LOG_TOKEN}` (or `Bearer ${MUNK_AUTH_HEADER_VALUE}` if no log token is set)  
 ]  
+
+> [!NOTE]  
+> Log endpoints are rate-limited to 30 requests per minute per IP (returns `429 Too Many Requests` when exceeded).
 
 #### Returns
 
@@ -153,6 +174,38 @@ A real-time Server-Sent Events (SSE) stream of type `text/event-stream`. Each ev
     "id": "{munk-function-id}",
     "is_error": false,
     "message": "log message from code execution"
+}
+```
+
+### Get Logs (History)
+
+GET - `/api/logs?id={function_id}&limit={limit}`  
+
+Headers - [  
+  `munk-function-id`: `main`,  
+  `munk-auth`: `${VALUE_SET_IN_SETUP}`  
+]  
+
+Query parameters:
+* `id` (required): function ID
+* `limit` (optional): max number of logs to fetch (default: 100, max: 1000)
+
+> [!NOTE]  
+> Log endpoints are rate-limited to 30 requests per minute per IP (returns `429 Too Many Requests` when exceeded).
+
+#### Returns
+
+```json
+{
+    "logs": [
+        {
+            "id": "{log_id}",
+            "function_id": "{function_id}",
+            "is_error": false,
+            "message": "log message from code execution",
+            "created_at": "2026-07-19 14:00:00"
+        }
+    ]
 }
 ```
 
