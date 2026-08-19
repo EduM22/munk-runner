@@ -23,10 +23,13 @@ Munk.serve(async (req) => {
 Get image from `docker pull ghcr.io/edum22/munk-runner:<VERSION>`
 
   * `env:MUNK_DB_PATH` -> Set custom save path for db | Default = `/var/lib/munk/`
+  * `env:MUNK_IPINFO_PATH` -> Set custom path for GeoIP database (`ipinfo_lite.mmdb`) | Defaults = `$MUNK_DB_PATH/ipinfo_lite.mmdb`
   * `env:MUNK_ENCRYPTION_KEY` -> Set encryption key for db
   * `env:MUNK_AUTH_HEADER_VALUE` -> Set the admin auth header value
   * `env:MUNK_LOG_TOKEN` -> Set the auth token for viewing logs | Defaults = `env:MUNK_AUTH_HEADER_VALUE`
   * `env:MUNK_USE_SESSION` -> Set to `true` to use `MunkSession` for persistent function execution | Defaults = `false`
+  * `env:MUNK_SESSION_WORKERS` -> Set the number of worker threads per `MunkSession` | Defaults = `4`
+  * `env:MUNK_MAX_BODY_SIZE` -> Set maximum request body size (e.g. `10MB`, `2048`, `500KB`) | Defaults = `10MB`
   * `env:MUNK_TELEMETRY` -> Set it to `false` to not send telemetry | Defaults = `true`
 
 ## Info
@@ -41,11 +44,33 @@ The code execution has default timeout of 15s and cpu limit of 50ms, this can be
 > [!NOTE]  
 > Users without a license is limited to 5 functions.
 
+### Permissions
+
+Function permissions restrict what system capabilities (network access, environment variables) the function's JavaScript isolate can perform.
+
+```json
+"permissions": {
+    "allow_net": ["api.example.com"],
+    "allow_env": ["API_KEY"]
+}
+```
+
+* `allow_net`: Controls network outbound connections (e.g. `fetch()`).
+* `allow_env`: Controls access to environment variables.
+
+#### Permission Levels:
+
+* **Omitted** *(Default)*: **Unrestricted access**. When `permissions` (or `allow_net` / `allow_env`) is omitted, the function has unrestricted access.
+* **Empty Array (`[]`)**: **No access granted**. All network outbound calls or environment variable reads throw a permission error.
+* **Wildcard (`["*"]`)**: **Unrestricted access**. Allows connecting to any host/domain or reading any environment variable.
+* **Specific Values (Allowlist)**: **Restricted access**. Allows connecting or reading **only** the specified domains, IP addresses, or environment variable names (e.g., `["api.github.com", "example.com"]`).
+
 ### Custom API
 
 ```javascript
 Munk.env.get(key: string) -> string | undefined | null
 Munk.env.toObject() -> { key: value } | undefined | null
+Munk.waitUntil(promise: Promise<any>)
 
 Munk.serve((req: Request) => Response | Promise<Response>)
 ```
@@ -98,6 +123,10 @@ Headers - [
             "limits": {
                 "walltime": "15s",
                 "cputime": "50ms"
+            },
+            "permissions": {
+                "allow_net": ["api.example.com"],
+                "allow_env": ["DATABASE_URL"]
             }
         }
     ]
@@ -124,6 +153,10 @@ Body
     "limits": { // (optional)
         "walltime": "10s", // Default: 15s
         "cputime": "75ms" // Default: 50ms
+    },
+    "permissions": { // (optional)
+        "allow_net": ["api.example.com"],
+        "allow_env": ["API_KEY"]
     }
 }
 ```
