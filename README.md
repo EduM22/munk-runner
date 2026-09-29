@@ -39,10 +39,10 @@ The navigator.userAgent value should be = `Munk`
 The use of `env:MUNK_USE_SESSION` CAN increase the throughput of the function BUT it will cache the v8/deno_core runtime per function, So if you need every request to use a clean deno_core isolate DO NOT use `env:MUNK_USE_SESSION`
 
 ### Limits
-The code execution has default timeout of 15s and cpu limit of 50ms, this can be changed when creating the function
+The code execution has default timeout of 15s and cpu limit of 50ms, this can be changed when creating the function.
 
 > [!NOTE]  
-> Users without a license is limited to 5 functions.
+> Users without a license are limited to 5 functions. Free-tier functions also have maximum limits of 60s walltime and 30s cputime.
 
 ### Permissions
 
@@ -51,18 +51,22 @@ Function permissions restrict what system capabilities (network access, environm
 ```json
 "permissions": {
     "allow_net": ["api.example.com"],
-    "allow_env": ["API_KEY"]
+    "allow_env": ["API_KEY"],
+    "allow_private_net": false
 }
 ```
 
 * `allow_net`: Controls network outbound connections (e.g. `fetch()`).
 * `allow_env`: Controls access to environment variables.
+* `allow_private_net`: Controls whether outbound connections are permitted to private / local network IP addresses (optional boolean, default `false`).
 
 #### Permission Levels:
 
-* **Omitted** *(Default)*: **Unrestricted access**. When `permissions` (or `allow_net` / `allow_env`) is omitted, the function has unrestricted access.
-* **Empty Array (`[]`)**: **No access granted**. All network outbound calls or environment variable reads throw a permission error.
-* **Wildcard (`["*"]`)**: **Unrestricted access**. Allows connecting to any host/domain or reading any environment variable.
+* **Omitted** *(Default)*:
+  * **Network (`allow_net`)**: **No network access** by default. Outbound requests (e.g., `fetch()`) require explicit permission via `["*"]` or an allowlist.
+  * **Environment (`allow_env`)**: **Unrestricted access** if the `permissions` block is omitted entirely; **No access** if `permissions` is provided but `allow_env` is omitted.
+* **Empty Array (`[]`)**: **No access granted**. Outbound network calls or environment variable reads throw a permission error.
+* **Wildcard (`["*"]`)**: **Unrestricted access**. Allows connecting to any public host/domain (set `allow_private_net: true` for private IPs) or reading any environment variable.
 * **Specific Values (Allowlist)**: **Restricted access**. Allows connecting or reading **only** the specified domains, IP addresses, or environment variable names (e.g., `["api.github.com", "example.com"]`).
 
 ### Custom API
@@ -88,6 +92,7 @@ x-munk-geo-country: 'United States'
 x-munk-geo-country-code: 'US'
 x-munk-geo-ip: '8.8.8.8'
 ```
+
 ### Health Check
 
 GET - `/health`
@@ -97,9 +102,16 @@ GET - `/health`
 ```json
 {
     "status": "ok",
-    "version": "<VERSION>",
+    "version": "0.10.0",
     "uptime_secs": 120
 }
+```
+
+### Response Headers
+All responses returned by Munk include the headers:
+```http
+Server: Munk
+x-munk-request-id: {request_id}
 ```
 
 ### List functions
@@ -110,6 +122,9 @@ Headers - [
   `munk-function-id`: `main`,  
   `munk-auth`: `${VALUE_SET_IN_SETUP}`  
 ] 
+
+> [!NOTE]  
+> API management endpoints are rate-limited to 30 requests per minute per IP (returns `429 Too Many Requests` when exceeded).
 
 #### Returns
 
@@ -126,7 +141,8 @@ Headers - [
             },
             "permissions": {
                 "allow_net": ["api.example.com"],
-                "allow_env": ["DATABASE_URL"]
+                "allow_env": ["DATABASE_URL"],
+                "allow_private_net": false
             }
         }
     ]
@@ -151,12 +167,13 @@ Body
         { "test": "this works, soo cool" }
     ],
     "limits": { // (optional)
-        "walltime": "10s", // Default: 15s
-        "cputime": "75ms" // Default: 50ms
+        "walltime": "10s", // Default: 15s (Free tier max: 60s)
+        "cputime": "75ms" // Default: 50ms (Free tier max: 30s)
     },
     "permissions": { // (optional)
         "allow_net": ["api.example.com"],
-        "allow_env": ["API_KEY"]
+        "allow_env": ["API_KEY"],
+        "allow_private_net": false // (optional, default: false)
     }
 }
 ```
@@ -167,7 +184,7 @@ header `munk-function-id` with the id of the created function.
 
 ### Call function
 
-Add header `munk-function-id` with the id of the function, then you will be redirected to the function.
+Add header `munk-function-id` with the ID of the function, then you will be routed to the function.
 
 ex: `'munk-function-id': '604qi60u0h0v'`
 
@@ -192,8 +209,16 @@ GET - `/api/logs/stream`
 
 Headers - [  
   `munk-function-id`: `main`,  
-  `Authorization`: `Bearer ${MUNK_LOG_TOKEN}` (or `Bearer ${MUNK_AUTH_HEADER_VALUE}` if no log token is set)  
+  `Authorization`: `Bearer ${MUNK_LOG_TOKEN}` (or `Bearer ${MUNK_AUTH_HEADER_VALUE}`) or `munk-auth`: `${MUNK_LOG_TOKEN}` (or `${MUNK_AUTH_HEADER_VALUE}`)  
 ]  
+
+Query Parameters (enables direct browser `EventSource` connections without custom headers):
+* `token`: `${MUNK_LOG_TOKEN}` (or `${MUNK_AUTH_HEADER_VALUE}`)
+
+Example URL for browser `EventSource`:
+```javascript
+const eventSource = new EventSource('/api/logs/stream?token=YOUR_LOG_TOKEN');
+```
 
 > [!NOTE]  
 > Log endpoints are rate-limited to 30 requests per minute per IP (returns `429 Too Many Requests` when exceeded).
@@ -254,3 +279,5 @@ You should probably use a reverse proxy like `nginx` or `caddy` and setup someth
 
 * IP address data is powered by [IPinfo](https://ipinfo.io/lite)
 * JS runtime from [deno_core](https://github.com/denoland/deno_core)
+
+
